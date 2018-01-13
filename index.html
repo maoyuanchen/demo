@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
     <meta charset="UTF-8">
@@ -34,23 +34,20 @@
         <div id="amap" class="amap-container"></div>
         <div class="page" id="page">
             <div class="weui-cells weui-cells_form">
-                <div class="weui-cell weui-cell_vcode">
+                <div class="weui-cell">
                     <div class="weui-cell__hd">
                         <label class="weui-label">所在地区</label>
                     </div>
                     <div class="weui-cell__bd">
-                        <input id="district" class="weui-input" type="text" value="" />
-                    </div>
-                    <div class="weui-cell__ft">
-                        <button class="weui-vcode-btn" v-on:click="selButClick">选择</button>
+                        <input id="district" class="weui-input" type="text" v-bind:value="district" v-on:click="selButClick" />
                     </div>
                 </div>
                 <div class="weui-cell">
                     <div class="weui-cell__hd">
-                        <label class="weui-label">地址</label>
+                        <label class="weui-label">详细地址</label>
                     </div>
                     <div class="weui-cell__bd">
-                        <input class="weui-input" type="text" value="" />
+                        <input id="address" class="weui-input" type="text" />
                     </div>
                 </div>
             </div>
@@ -66,7 +63,7 @@
                     <div class="modal-content">
                         <div class="weui-cells">
                             <template v-for="item in cells">
-                                <a class="weui-cell weui-cell_access" v-on:click="getDistrict(item.adcode,item.name,item.level)" href="javascript:;">
+                                <a class="weui-cell weui-cell_access" v-on:click="getDistrict(item)" href="javascript:;">
                                     <div class="weui-cell__bd">
                                         <p>{{item.name}}</p>
                                     </div>
@@ -83,53 +80,74 @@
 <script src="/dist/lib/jquery-2.1.4.js"></script>
 <script src="/dist/lib/fastclick.js"></script>
 <script src="/dist/js/jquery-weui.js"></script>
-<script src="//webapi.amap.com/maps?v=1.4.3&key=b3f46725cfbf1073af700a708c2eb00c"></script>
+<script src="//webapi.amap.com/maps?v=1.4.3&key=ae4b6a00d98aef05211a06f61981321e"></script>
+<!-- UI组件库 1.0 -->
+<script src="//webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
 <script src="//cdn.jsdelivr.net/npm/vue"></script>
 <script>
-    //b3f46725cfbf1073af700a708c2eb00c
     $(function() {
+        // key
         var key = 'b3f46725cfbf1073af700a708c2eb00c';
+
         var marker, map = new AMap.Map("amap", {
             resizeEnable: true,
+            scrollWheel: false,
             center: [116.397428, 39.90923],
             zoom: 13
         });
+        AMapUI.loadUI(['misc/PositionPicker'], function(PositionPicker) {
+            var positionPicker = new PositionPicker({
+                mode: 'dragMap',
+                map: map
+            });
+            positionPicker.on('success', function(result) {
+                console.log(result);
+                var component = result.regeocode.addressComponent;
+                $("#address").val(component.street + component.streetNumber);
+                $("#district").val(component.province + component.district + component.township);
+            });
+            positionPicker.on('fail', function(result) {
+                console.log(result);
+            });
+            positionPicker.start();
+        });
         // 实例化点标记
-        function addMarker() {
+        function addMarker(lnglat) {
             if (marker) {
-                return;
+                marker.setMap(null);
+                marker = null;
             }
             marker = new AMap.Marker({
-                icon: "http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png",
-                position: [116.397428, 39.90923]
+                position: lnglat
             });
             marker.setMap(map);
         }
-        addMarker();
         var vm = new Vue({
             el: '#page',
             methods: {
                 selButClick: function() {
                     $("#sel_popup").popup();
-                    this.getDistrict('100000')
+                    this.getDistrict({
+                        adcode: '100000'
+                    })
                 },
                 cellClick: function(id) {
                     $.alert(id);
                 },
-                getDistrict: function(keywords, name, level) {
-                    if (keywords == '100000') {
+                getDistrict: function(item) {
+                    if (item.adcode == '100000') {
                         this.district = '';
                     } else {
-                        this.district += name;
+                        this.district += item.name;
                     }
-                    $("#district").val(this.district);
-                    if (level === "street") {
+                    if (item.level === "street") {
+                        map.setCenter(item.center.split(','));
                         $.closePopup();
                         return;
                     }
                     $.showLoading();
                     $.ajax({
-                        url: "http://restapi.amap.com/v3/config/district?key=" + key + "&keywords=" + keywords + "&subdistrict=1&extensions=base",
+                        url: "http://restapi.amap.com/v3/config/district?key=" + key + "&keywords=" + item.adcode + "&subdistrict=1&extensions=base",
                         async: false,
                         dataType: 'jsonp',
                         success: function(data) {
@@ -151,7 +169,7 @@
                 title: '请选择',
                 cells: [{
                     adcode: "110000",
-                    center: "116.407394,39.904211",
+                    center: "116.397428, 39.90923",
                     citycode: "010",
                     name: "北京市"
                 }]
