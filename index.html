@@ -47,7 +47,7 @@
                         <label class="weui-label">详细地址</label>
                     </div>
                     <div class="weui-cell__bd">
-                        <input id="address" class="weui-input" type="text" />
+                        <input id="address" class="weui-input" type="text" v-bind:value="address" />
                     </div>
                 </div>
             </div>
@@ -125,7 +125,6 @@
                 },
                 getDistrict: function(item) {
                     if (item.adcode != '100000') {
-                        this.district += item.name;
                         this.districtComponent = item;
                     }
                     if (item.level === "street") {
@@ -154,6 +153,7 @@
             },
             data: {
                 district: '',
+                address: '',
                 districtComponent: null,
                 title: '请选择',
                 cells: [{
@@ -172,9 +172,8 @@
             positionPicker.on('success', function(result) {
                 console.log(result);
                 var component = result.regeocode.addressComponent;
-                $("#address").val(component.street + component.streetNumber);
-                $("#district").val(component.province + component.district + component.township);
-                vm.district = $("#district").val();
+                vm.district = component.province + component.city + component.district + component.township;
+                vm.address = component.street + component.streetNumber;
             });
             positionPicker.on('fail', function(result) {
                 console.log(result);
