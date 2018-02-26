@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.0/jquery.min.js"></script>
+    <script>
+        $.ajax({
+            type: "post",
+            url: "http://sge.cn:9101/api/smfw",
+            data: {
+                gs: "1", // 1: 鸿雁, 2: 南京鸿雁
+                fwtm: "123456"
+            },
+            dataType: "jsonp",
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            async: false,
+            cache: false,
+            success: function(response) {
+                console.log(response);
+            },
+            error: function() {
+                alert("服务器发生错误");
+            }
+        });
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>
